@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import string
 import time
 import argparse
@@ -17,10 +20,16 @@ class IndexMaker():
     def run(self, args):
         try:
             # get the word list and create a dict of words
-            words_list = [line.strip() for line in open(args.w)]
+            words_list = []
+            with open(args.w, 'rb') as f:
+                for l in f.readlines():
+                    if args.w:
+                        w = l.decode('cp1252').strip().encode('utf-8')
+                    else:
+                        w = w.strip()
+                    words_list.append(w)
         except IOError as e:
-            print e
-            exit()
+            raise e    
 
         # start the timer
         start = time.clock()
@@ -49,8 +58,8 @@ def get_pdf_text(path):
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
     # change to to utf-8 if the text comes out garbled
-    codec = 'ascii'
-    #codec = 'utf-8'
+    #codec = 'ascii'
+    codec = 'utf-8'
     laparams = LAParams()
     pages = {}
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams, showpageno=True, pages=pages)
@@ -91,7 +100,8 @@ def create_index(pdf_path, words_list):
     """ Create a word index from pdf file
     """
     text_data = get_pdf_text(pdf_path)
-    word_index = {}
+    word_index = {}    
+    
     for page in text_data:
         for word in words_list:
             if find_whole_word(word, text_data[page]):
@@ -109,6 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', default=False, help='Print output to console')
     parser.add_argument('-w', required=True, help='A text file of new line delimited words')
     parser.add_argument('-f', required=True, help='The pdf file to create the index from')
+    parser.add_argument('-w', required=False, help='The searchwords use windows cp1252 charcter encoding')
 
     args = parser.parse_args()
     IndexMaker(args)
